@@ -572,9 +572,11 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	 */
 	set: Dex.PokemonSet | null = null;
 
+	isHackmons: boolean = false;
+
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' | 'nfe' |
 		'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'predlcnatdex' | 'svdlc1' | 'svdlc1doubles' |
-		'svdlc1natdex' | 'stadium' | 'lc' | null = null;
+		'svdlc1natdex' | 'stadium' | 'lc' | 'customdex' | null = null;
 	isDoubles = false;
 
 	/**
@@ -604,6 +606,12 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.dex = Dex.forGen(gen);
 		} else if (!format) {
 			this.dex = Dex;
+		}
+		if (format.startsWith('customdex')) {
+			format = format.slice(9) as ID;
+			this.dex = Dex.mod(`gen${this.dex.gen}${format}` as ID);
+			this.formatType = 'customdex';
+			this.isHackmons = true;
 		}
 
 		if (format.startsWith('dlc1') && this.dex.gen === 8) {
@@ -855,7 +863,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.format.startsWith('battlespot') ||
 			this.format.startsWith('battlestadium') ||
 			this.format.startsWith('battlefestival') ||
-			(this.dex.gen === 9 && this.formatType !== 'natdex')
+			(this.dex.gen === 9 && (this.formatType !== 'natdex' && this.formatType !== 'customdex'))
 		) {
 			if (gen === 9) {
 				genChar = 'a';
@@ -910,6 +918,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'svdlc1natdex' ? 'gen9dlc1natdex' :
 			this.formatType === 'natdex' ? `gen${gen}natdex` :
 			this.formatType === 'stadium' ? `gen${gen}stadium${gen > 1 ? gen : ''}` :
+			this.formatType === 'customdex' ? `gen${gen}${this.format}` :
 			`gen${gen}`;
 		if (table?.[tableKey]) {
 			table = table[tableKey];
@@ -1001,12 +1010,15 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		if (!format) return this.getDefaultResults();
 		const isVGCOrBS = format.startsWith('battlespot') || format.startsWith('bss') ||
 			format.startsWith('battlestadium') || format.startsWith('vgc');
-		const isHackmons = format.includes('hackmons') || format.endsWith('bh');
+		const isHackmons = this.isHackmons || format.includes('hackmons') || format.endsWith('bh');
 		let isDoublesOrBS = isVGCOrBS || this.formatType?.includes('doubles');
 		const dex = this.dex;
 
 		let table = BattleTeambuilderTable;
-		if ((format.endsWith('cap') || format.endsWith('caplc')) && dex.gen < 9) {
+		if (this.formatType === 'customdex') {
+			table = table[`gen${dex.gen}${this.format}`];
+		}
+		else if ((format.endsWith('cap') || format.endsWith('caplc')) && dex.gen < 9) {
 			table = table[`gen${dex.gen}`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
@@ -1263,7 +1275,7 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 	getBaseResults(): SearchRow[] {
 		if (!this.species) return this.getDefaultResults();
 		const format = this.format;
-		const isHackmons = (format.includes('hackmons') || format.endsWith('bh'));
+		const isHackmons = (this.isHackmons || format.includes('hackmons') || format.endsWith('bh'));
 		const isAAA = (format === 'almostanyability' || format.includes('aaa'));
 		const dex = this.dex;
 		let species = dex.species.get(this.species);
@@ -1719,12 +1731,12 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		const dex = this.dex;
 		let species = dex.species.get(this.species);
 		const format = this.format;
-		const isHackmons = (format.includes('hackmons') || format.endsWith('bh'));
+		const isHackmons = (this.isHackmons || format.includes('hackmons') || format.endsWith('bh'));
 		const isSTABmons = (format.includes('stabmons') || format === 'staaabmons');
 		const isTradebacks = format.includes('tradebacks');
 		const regionBornLegality = dex.gen >= 6 &&
 			(/^battle(spot|stadium|festival)/.test(format) || format.startsWith('bss') ||
-				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex'));
+				format.startsWith('vgc') || (dex.gen === 9 && (this.formatType !== 'natdex' && this.formatType !== 'customdex')));
 
 		let learnsetid = this.firstLearnsetid(species.id);
 		let moves: string[] = [];
@@ -1761,7 +1773,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if (this.formatType !== 'natdex' && move.isNonstandard === "Past") {
+					if ((this.formatType !== 'natdex' && this.formatType !== 'customdex') && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (
@@ -1803,13 +1815,13 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				if (sketch) {
 					if (move.flags['nosketch'] || move.isMax || move.isZ) continue;
 					if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
+					if (move.isNonstandard === 'Past' && (this.formatType !== 'natdex' && this.formatType !== 'customdex')) continue;
 					sketchMoves.push(move.id);
 				} else {
 					if (!(dex.gen < 8 || this.formatType === 'natdex') && move.isZ) continue;
 					if (typeof move.isMax === 'string') continue;
 					if (move.isMax && dex.gen > 8) continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
+					if (move.isNonstandard === 'Past' && (this.formatType !== 'natdex' && this.formatType !== 'customdex')) continue;
 					if (move.isNonstandard === 'LGPE' && this.formatType !== 'letsgo') continue;
 					moves.push(move.id);
 				}

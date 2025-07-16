@@ -30,6 +30,9 @@
 				if (this.curTeam.format.includes('bdsp')) {
 					this.curTeam.dex = Dex.mod('gen8bdsp');
 				}
+				if (this.curTeam.format.includes('opalo')) {
+					this.curTeam.dex = Dex.mod('gen8opalo');
+				}
 				Storage.activeSetList = this.curSetList;
 			}
 		},
@@ -258,6 +261,7 @@
 			this.updateTeamList();
 		},
 		insecureUse: function () {
+			Storage.whenTeamsLoaded.error = null;
 			Storage.whenTeamsLoaded.load();
 			this.updateTeamInterface();
 		},
@@ -754,6 +758,9 @@
 			}
 			if (this.curTeam.format.includes('bdsp')) {
 				this.curTeam.dex = Dex.mod('gen8bdsp');
+			}
+			if (this.curTeam.format.includes('opalo')) {
+				this.curTeam.dex = Dex.mod('gen8opalo');
 			}
 			Storage.activeSetList = this.curSetList = Storage.unpackTeam(this.curTeam.team);
 			this.curTeamIndex = i;
@@ -1607,6 +1614,9 @@
 			}
 			if (this.curTeam.format.includes('bdsp')) {
 				this.curTeam.dex = Dex.mod('gen8bdsp');
+			}
+			if (this.curTeam.format.includes('opalo')) {
+				this.curTeam.dex = Dex.mod('gen8opalo');
 			}
 			this.save();
 			if (this.curTeam.gen === 5 && !Dex.loadedSpriteData['bw']) Dex.loadSpriteData('bw');

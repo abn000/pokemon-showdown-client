@@ -218,9 +218,9 @@ function toId() {
 		 */
 		getActionPHP: function () {
 			var ret = '/~~' + Config.server.id + '/action.php';
-			if (Config.testclient) {
-				ret = 'https://' + Config.routes.client + ret;
-			}
+			// if (Config.testclient) {
+				ret = 'https://play.pokemonshowdown.com' + ret;
+			// }
 			return (this.getActionPHP = function () {
 				return ret;
 			})();
@@ -239,29 +239,8 @@ function toId() {
 		 *     triggered if the login server did not return a response
 		 */
 		finishRename: function (name, assertion) {
-			if (assertion.slice(0, 14).toLowerCase() === '<!doctype html') {
-				// some sort of MitM proxy; ignore it
-				var endIndex = assertion.indexOf('>');
-				if (endIndex > 0) assertion = assertion.slice(endIndex + 1);
-			}
-			if (assertion.charAt(0) === '\r') assertion = assertion.slice(1);
-			if (assertion.charAt(0) === '\n') assertion = assertion.slice(1);
-			if (assertion.indexOf('<') >= 0) {
-				app.addPopupMessage("Something is interfering with our connection to the login server. Most likely, your internet provider needs you to re-log-in, or your internet provider is blocking Pokémon Showdown.");
-				return;
-			}
-			if (assertion === ';') {
-				this.trigger('login:authrequired', name);
-			} else if (assertion === ';;@gmail') {
-				this.trigger('login:authrequired', name, '@gmail');
-			} else if (assertion.substr(0, 2) === ';;') {
-				this.trigger('login:invalidname', name, assertion.substr(2));
-			} else if (assertion.indexOf('\n') >= 0 || !assertion) {
-				app.addPopupMessage("Something is interfering with our connection to the login server.");
-			} else {
-				app.trigger('loggedin');
-				app.send('/trn ' + name + ',0,' + assertion);
-			}
+			app.trigger('loggedin');
+			app.send('/trn ' + name);
 		},
 		/**
 		 * Rename this user to an arbitrary username. If the username is
@@ -287,14 +266,7 @@ function toId() {
 			}
 
 			if (this.get('userid') !== userid) {
-				var self = this;
-				$.post(this.getActionPHP(), {
-					act: 'getassertion',
-					userid: userid,
-					challstr: this.challstr
-				}, function (data) {
-					self.finishRename(name, data);
-				});
+				this.finishRename(name);
 			} else {
 				app.send('/trn ' + name);
 			}
@@ -342,27 +314,27 @@ function toId() {
 				 */
 				this.challstr = challstr;
 				var self = this;
-				$.post(this.getActionPHP(), {
-					act: 'upkeep',
-					challstr: this.challstr
-				}, Storage.safeJSON(function (data) {
-					self.loaded = true;
-					if (!data.username) {
-						app.topbar.updateUserbar();
-						return;
-					}
+				
+				self.loaded = true;
+				const data = {
+					loggedin: false,
+					username: "",
+				};
+				if (!data.username) {
+					app.topbar.updateUserbar();
+					return;
+				}
 
-					// | , ; are not valid characters in names
-					data.username = data.username.replace(/[\|,;]+/g, '');
+				// | , ; are not valid characters in names
+				data.username = data.username.replace(/[\|,;]+/g, '');
 
-					if (data.loggedin) {
-						self.set('registered', {
-							username: data.username,
-							userid: toUserid(data.username)
-						});
-					}
-					self.finishRename(data.username, data.assertion);
-				}), 'text');
+				if (data.loggedin) {
+					self.set('registered', {
+						username: data.username,
+						userid: toUserid(data.username)
+					});
+				}
+				self.finishRename(data.username, data.assertion);
 			}
 		},
 		/**

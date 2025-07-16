@@ -621,44 +621,48 @@ Storage.compareTeams = function (serverTeam, localTeam) {
 };
 
 Storage.loadRemoteTeams = function (after) {
-	$.get(app.user.getActionPHP(), { act: 'getteams' }, Storage.safeJSON(function (data) {
-		if (data.actionerror) {
-			return app.addPopupMessage('Error loading uploaded teams: ' + data.actionerror);
-		}
-		for (var i = 0; i < data.teams.length; i++) {
-			var team = data.teams[i];
-			var matched = false;
-			for (var j = 0; j < Storage.teams.length; j++) {
-				var curTeam = Storage.teams[j];
-				var match = Storage.compareTeams(team, curTeam);
-				if (match === true) {
-					// prioritize locally saved teams over remote
-					// as so to not overwrite changes
-					matched = true;
-					break;
-				}
-				if (match === 'rename') {
-					delete curTeam.teamid;
-					if (!team.name.endsWith(' (server version)')) {
-						team.name += ' (server version)';
-					}
-				}
-			}
-			team.loaded = false;
-			if (!matched) {
-				// hack so that it shows up in the format selector list
-				team.folder = '';
-				// team comes down from loginserver as comma-separated list of mons
-				// to save bandwidth
-				var mons = team.team.split(',').map(function (mon) {
-					return { species: mon };
-				});
-				team.team = Storage.packTeam(mons);
-				Storage.teams.unshift(team);
-			}
-		}
-		if (typeof after === 'function') after();
-	}));
+	if (typeof after === 'function') {
+		after();
+	}
+	return
+	// $.get(app.user.getActionPHP(), { act: 'getteams' }, Storage.safeJSON(function (data) {
+	// 	if (data.actionerror) {
+	// 		return app.addPopupMessage('Error loading uploaded teams: ' + data.actionerror);
+	// 	}
+	// 	for (var i = 0; i < data.teams.length; i++) {
+	// 		var team = data.teams[i];
+	// 		var matched = false;
+	// 		for (var j = 0; j < Storage.teams.length; j++) {
+	// 			var curTeam = Storage.teams[j];
+	// 			var match = Storage.compareTeams(team, curTeam);
+	// 			if (match === true) {
+	// 				// prioritize locally saved teams over remote
+	// 				// as so to not overwrite changes
+	// 				matched = true;
+	// 				break;
+	// 			}
+	// 			if (match === 'rename') {
+	// 				delete curTeam.teamid;
+	// 				if (!team.name.endsWith(' (server version)')) {
+	// 					team.name += ' (server version)';
+	// 				}
+	// 			}
+	// 		}
+	// 		team.loaded = false;
+	// 		if (!matched) {
+	// 			// hack so that it shows up in the format selector list
+	// 			team.folder = '';
+	// 			// team comes down from loginserver as comma-separated list of mons
+	// 			// to save bandwidth
+	// 			var mons = team.team.split(',').map(function (mon) {
+	// 				return { species: mon };
+	// 			});
+	// 			team.team = Storage.packTeam(mons);
+	// 			Storage.teams.unshift(team);
+	// 		}
+	// 	}
+	// 	if (typeof after === 'function') after();
+	// }));
 };
 
 Storage.loadPackedTeams = function (buffer) {
