@@ -15,7 +15,8 @@ if (!fs.existsSync('caches/pokemon-showdown')) {
 }
 
 process.stdout.write("Syncing data from Git repository... ");
-// child_process.execSync('git pull', { cwd: 'caches/pokemon-showdown' });
+child_process.execSync('git restore .', { cwd: 'caches/pokemon-showdown' });
+child_process.execSync('git pull', { cwd: 'caches/pokemon-showdown' });
 child_process.execSync('npm run build', { cwd: 'caches/pokemon-showdown' });
 console.log("DONE");
 
@@ -1162,7 +1163,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 			}
 		}
-
+		
 		const overrideMoveData = {};
 		BattleTeambuilderTable[gen].overrideMoveData = overrideMoveData;
 		for (const id in genData.Moves) {
@@ -1176,7 +1177,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 			}
 		}
-
+		
 		const overrideAbilityData = {};
 		BattleTeambuilderTable[gen].overrideAbilityData = overrideAbilityData;
 		for (const id in genData.Abilities) {
@@ -1189,7 +1190,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 			}
 		}
-
+		
 		const overrideItemData = {};
 		BattleTeambuilderTable[gen].overrideItemData = overrideItemData;
 		for (const id in genData.Items) {
@@ -1202,7 +1203,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 			}
 		}
-
+		
 		const overrideTypeChart = {};
 		BattleTeambuilderTable[gen].overrideTypeChart = overrideTypeChart;
 		const removeType = {};
@@ -1219,16 +1220,16 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			}
 		}
 	}
-
+	
 	//
 	// Mods
 	//
-
+	
 	for (const mod of ['gen3rs', 'gen5bw1', 'gen7letsgo', 'gen8bdsp', 'gen9ssb', ...customDexMods.map(mod => `gen${mod.gen}${mod.name}`)]) {
 		const modDex = Dex.mod(mod);
 		const modData = modDex.data;
 		const parentDex = Dex.forGen(modDex.gen);
-
+		
 		const overrideSpeciesData = {};
 		BattleTeambuilderTable[mod].overrideSpeciesData = overrideSpeciesData;
 		for (const id in modData.Pokedex) {
@@ -1241,7 +1242,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 			}
 		}
-
+		
 		const overrideMoveData = {};
 		BattleTeambuilderTable[mod].overrideMoveData = overrideMoveData;
 		for (const id in modData.Moves) {
