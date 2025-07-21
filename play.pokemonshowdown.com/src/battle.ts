@@ -3429,6 +3429,11 @@ export class Battle {
 			if (this.tier.includes('Super Staff Bros')) {
 				this.dex = Dex.mod('gen9ssb' as ID);
 			}
+			const gen = this.tier.match(/Gen (\d)/);
+			if (gen && this.tier.includes('Custom Dex')) {
+				this.gen = parseInt(gen[1], 10);
+				this.dex = Dex.mod(`gen${this.gen}${this.tier.substring(this.tier.lastIndexOf('Custom Dex') + 11).toLowerCase()}` as ID);
+			}
 			this.log(args);
 			break;
 		}
